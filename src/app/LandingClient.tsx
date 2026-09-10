@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, CheckCircle2, MonitorSmartphone, Package, FileText, Truck, BarChart3, ChevronDown, ShieldCheck, Tag, Percent, FileCode2, Store, Users } from 'lucide-react'
+import { Menu, X, CheckCircle2, MonitorSmartphone, Package, FileText, Truck, BarChart3, ChevronDown, ChevronUp, ShieldCheck, Tag, Percent, FileCode2, Store, Users } from 'lucide-react'
 
 const APP_NAME = "VitrinaHub"
 
