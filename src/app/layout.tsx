@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { DM_Serif_Text, IBM_Plex_Sans } from "next/font/google";
+import { Instrument_Serif, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const fontDisplay = DM_Serif_Text({
+const fontDisplay = Instrument_Serif({
   weight: ["400"],
   style: ["normal", "italic"],
   subsets: ["latin"],
   variable: "--font-display",
 });
 
-const fontBody = IBM_Plex_Sans({
-  weight: ["400", "500", "600", "700"],
+const fontBody = DM_Sans({
+  weight: ["400", "500", "700"],
+  style: ["normal", "italic"],
   subsets: ["latin"],
   variable: "--font-body",
 });
