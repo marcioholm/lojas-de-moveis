@@ -2,20 +2,33 @@
 
 import { useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
-import { login } from './actions'
+import { login, signUp } from './actions'
 
 export default function LoginPage() {
+  const [tab, setTab] = useState<'login' | 'signup'>('login')
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(formData: FormData) {
     setLoading(true)
     setError(null)
-    const result = await login(formData)
-    if (result?.error) {
-      setError(result.error)
-      setLoading(false)
+    setSuccess(null)
+    
+    if (tab === 'login') {
+      const result = await login(formData)
+      if (result?.error) {
+        setError(result.error)
+      }
+    } else {
+      const result = await signUp(formData)
+      if (result?.error) {
+        setError(result.error)
+      } else if (result?.success) {
+        setSuccess(result.success)
+      }
     }
+    setLoading(false)
   }
 
   return (
@@ -33,8 +46,31 @@ export default function LoginPage() {
             </div>
           </div>
           
-          <h1 className="font-serif text-3xl mb-2 text-gray-900">Bem-vindo de volta</h1>
-          <p className="text-gray-500 text-sm mb-8">Acesse o painel da sua loja para gerenciar vendas, estoque e equipe.</p>
+          <div className="flex gap-6 mb-8 border-b border-gray-100">
+            <button 
+              type="button"
+              onClick={() => setTab('login')}
+              className={`pb-3 font-semibold text-sm border-b-2 transition-all ${tab === 'login' ? 'border-[var(--primary)] text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+            >
+              Entrar
+            </button>
+            <button 
+              type="button"
+              onClick={() => setTab('signup')}
+              className={`pb-3 font-semibold text-sm border-b-2 transition-all ${tab === 'signup' ? 'border-[var(--primary)] text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+            >
+              Criar Conta
+            </button>
+          </div>
+
+          <h1 className="font-serif text-3xl mb-2 text-gray-900">
+            {tab === 'login' ? 'Bem-vindo de volta' : 'Comece agora'}
+          </h1>
+          <p className="text-gray-500 text-sm mb-8">
+            {tab === 'login' 
+              ? 'Acesse o painel da sua loja para gerenciar vendas, estoque e equipe.' 
+              : 'Crie seu acesso administrativo para configurar a sua loja no sistema.'}
+          </p>
           
           <form action={handleSubmit} className="flex flex-col gap-5">
             <div className="flex flex-col gap-1.5">
@@ -64,18 +100,26 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
+            
+            {success && (
+              <div className="p-3 bg-green-50 text-green-700 text-sm rounded-lg font-medium border border-green-200">
+                {success}
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={loading}
               className="mt-4 w-full py-3.5 px-4 bg-[var(--primary)] text-white font-bold text-[14px] rounded-lg hover:bg-[var(--primary-hover)] transition-all shadow-lg shadow-[var(--primary)]/30 disabled:opacity-70 flex justify-center active:scale-[0.98]"
             >
-              {loading ? 'Autenticando...' : 'Entrar no Sistema'}
+              {loading 
+                ? 'Processando...' 
+                : tab === 'login' ? 'Entrar no Sistema' : 'Criar minha conta'}
             </button>
           </form>
           
           <p className="text-xs text-gray-400 mt-8 text-center">
-            Esqueceu sua senha? Entre em contato com o suporte ou fale com o administrador da sua loja.
+            Problemas com acesso? Entre em contato com o suporte ou fale com o administrador da sua loja.
           </p>
         </div>
       </div>
