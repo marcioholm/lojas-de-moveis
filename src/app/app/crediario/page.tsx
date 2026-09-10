@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { Plus, Printer, Check, Receipt, CheckCircle, AlertTriangle, DollarSign } from 'lucide-react'
+import { payInstallment } from '@/app/app/actions'
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
@@ -170,9 +171,11 @@ export default async function CrediarioPage() {
                   <button className="btn btn-outline btn-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                     <Printer size={14} /> Imprimir
                   </button>
-                  <button className="btn btn-primary btn-sm bg-[var(--primary)] text-white" disabled={c.nextValue === 0}>
-                    <Check size={14} /> Dar baixa
-                  </button>
+                  <form action={payInstallment.bind(null, c.installments[c.paidCount]?.id || '')}>
+                    <button type="submit" className="btn btn-primary btn-sm bg-[var(--primary)] text-white" disabled={c.nextValue === 0}>
+                      <Check size={14} /> Dar baixa
+                    </button>
+                  </form>
                 </div>
               </div>
             </div>

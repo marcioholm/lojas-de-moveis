@@ -1,5 +1,8 @@
 import { createClient } from '@/utils/supabase/server'
 import { Plus, Search, Eye, Edit2, Trash2 } from 'lucide-react'
+import Link from 'next/link'
+import { CustomerModal } from '@/components/modals/CustomerModal'
+import { deleteCustomer } from '@/app/app/actions'
 
 export default async function ClientesPage({
   searchParams,
@@ -29,11 +32,13 @@ export default async function ClientesPage({
           <p>Dados completos para vendas, entregas, notas fiscais e crediário.</p>
         </div>
         <div className="flex gap-2 flex-wrap mt-4 sm:mt-0">
-          <button className="btn btn-primary bg-[var(--primary)] text-white">
+          <Link href="?modal=customer" className="btn btn-primary bg-[var(--primary)] text-white no-underline">
             <Plus size={16} /> Cadastrar cliente
-          </button>
+          </Link>
         </div>
       </div>
+
+      <CustomerModal />
 
       <div className="search-bar">
         <Search size={16} />
@@ -76,9 +81,11 @@ export default async function ClientesPage({
                     <button className="btn btn-outline btn-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]" title="Editar">
                       <Edit2 size={14} />
                     </button>
-                    <button className="btn btn-outline btn-sm text-[var(--danger)] hover:bg-[var(--danger-bg)] border-[var(--border)]" title="Excluir">
-                      <Trash2 size={14} />
-                    </button>
+                    <form action={deleteCustomer.bind(null, c.id)}>
+                      <button type="submit" className="btn btn-outline btn-sm text-[var(--danger)] hover:bg-[var(--danger-bg)] border-[var(--border)]" title="Excluir">
+                        <Trash2 size={14} />
+                      </button>
+                    </form>
                   </td>
                 </tr>
               ))

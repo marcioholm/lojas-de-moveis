@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { Truck, Check, PackageOpen, ChevronRight } from 'lucide-react'
+import { updateDeliveryStatus } from '@/app/app/actions'
 
 export default async function EntregasPage() {
   const supabase = await createClient()
@@ -122,14 +123,18 @@ export default async function EntregasPage() {
 
                 <div className="flex gap-2 justify-end mt-2">
                   {d.status === 'separacao' && (
-                    <button className="btn btn-primary btn-sm bg-[var(--primary)] text-white">
-                      <Truck size={14} /> Marcar saída
-                    </button>
+                    <form action={updateDeliveryStatus.bind(null, d.id, 'rota')}>
+                      <button type="submit" className="btn btn-primary btn-sm bg-[var(--primary)] text-white">
+                        <Truck size={14} /> Marcar saída
+                      </button>
+                    </form>
                   )}
                   {d.status === 'rota' && (
-                    <button className="btn btn-primary btn-sm bg-[var(--success)] border-[var(--success)] text-white hover:bg-[var(--success-bg)] hover:text-[var(--success)]">
-                      <Check size={14} /> Confirmar entrega
-                    </button>
+                    <form action={updateDeliveryStatus.bind(null, d.id, 'entregue')}>
+                      <button type="submit" className="btn btn-primary btn-sm bg-[var(--success)] border-[var(--success)] text-white hover:bg-[var(--success-bg)] hover:text-[var(--success)]">
+                        <Check size={14} /> Confirmar entrega
+                      </button>
+                    </form>
                   )}
                   {d.status === 'entregue' && (
                     <span className="text-[11px] text-[var(--success)] font-semibold flex items-center gap-1">

@@ -1,5 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { Plus, Download, ShoppingCart, ClipboardList, DollarSign, Eye } from 'lucide-react'
+import Link from 'next/link'
+import { SaleModal } from '@/components/modals/SaleModal'
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
@@ -34,11 +36,13 @@ export default async function VendasPage() {
           <button className="btn btn-outline text-[var(--text-primary)]">
             <Download size={16} /> Exportar
           </button>
-          <button className="btn btn-primary bg-[var(--primary)] text-white">
+          <Link href="?modal=sale" className="btn btn-primary bg-[var(--primary)] text-white no-underline">
             <Plus size={16} /> Nova venda
-          </button>
+          </Link>
         </div>
       </div>
+
+      <SaleModal />
 
       <div className="kpis" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
         <div className="kpi">

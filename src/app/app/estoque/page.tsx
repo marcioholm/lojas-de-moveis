@@ -1,6 +1,8 @@
 import { createClient } from '@/utils/supabase/server'
 import { Plus, Search, Box, Download, Eye, Share2, Edit2, Trash2, EyeOff } from 'lucide-react'
 import Link from 'next/link'
+import { ProductModal } from '@/components/modals/ProductModal'
+import { deleteProduct } from '@/app/app/actions'
 
 function formatMoney(value: number | null) {
   if (!value) return 'R$ 0,00'
@@ -39,11 +41,13 @@ export default async function EstoquePage({
           <button className="btn btn-outline text-[var(--text-primary)]">
             <Download size={16} /> Exportar
           </button>
-          <button className="btn btn-primary bg-[var(--primary)] text-white">
+          <Link href="?modal=product" className="btn btn-primary bg-[var(--primary)] text-white no-underline">
             <Plus size={16} /> Cadastrar produto
-          </button>
+          </Link>
         </div>
       </div>
+
+      <ProductModal />
 
       <div className="search-bar">
         <Search size={16} />
@@ -108,9 +112,11 @@ export default async function EstoquePage({
                       <button className="btn btn-outline btn-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]" title="Editar">
                         <Edit2 size={14} />
                       </button>
-                      <button className="btn btn-outline btn-sm text-[var(--danger)] hover:bg-[var(--danger-bg)] border-[var(--border)]" title="Excluir">
-                        <Trash2 size={14} />
-                      </button>
+                      <form action={deleteProduct.bind(null, p.id)}>
+                        <button type="submit" className="btn btn-outline btn-sm text-[var(--danger)] hover:bg-[var(--danger-bg)] border-[var(--border)]" title="Excluir">
+                          <Trash2 size={14} />
+                        </button>
+                      </form>
                     </td>
                   </tr>
                 )
