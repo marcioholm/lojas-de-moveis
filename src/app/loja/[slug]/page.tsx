@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { Box, ShoppingBag } from 'lucide-react'
+import LeadModalClient from './LeadModalClient'
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
@@ -22,7 +23,7 @@ export default async function VitrinePublicaPage({
 
   const { data: tenant } = await supabaseAdmin
     .from('tenants')
-    .select('id, nome, cor_primaria')
+    .select('id, nome, cor_primaria, telefone_principal')
     .eq('slug', resolvedParams.slug)
     .single()
 
@@ -60,23 +61,9 @@ export default async function VitrinePublicaPage({
                 </div>
                 <div className="p-4 flex flex-col flex-grow">
                   <h3 className="font-semibold text-gray-900 line-clamp-2">{p.nome}</h3>
-                  <div className="mt-auto pt-3">
-                    <div className="text-xl font-bold" style={{ color: 'var(--brand)' }}>
-                      {formatMoney(p.preco_venda)}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      10x de {formatMoney(p.preco_venda / 10)} sem juros
-                    </div>
+                  <div className="mt-auto pt-4 flex flex-col gap-2">
+                    <LeadModalClient product={p} tenantWhatsApp={tenant.telefone_principal} />
                   </div>
-                  <a 
-                    href={`https://wa.me/?text=Olá, tenho interesse no produto ${encodeURIComponent(p.nome)} que vi na vitrine!`}
-                    target="_blank"
-                    className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
-                    style={{ backgroundColor: 'var(--brand)' }}
-                  >
-                    <ShoppingBag size={18} />
-                    Comprar
-                  </a>
                 </div>
               </div>
             ))
