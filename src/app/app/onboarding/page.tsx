@@ -39,7 +39,7 @@ export default async function OnboardingPage() {
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle size={32} />
           </div>
-          <h1 className="text-2xl font-bold font-serif">Bem-vindo ao Marka Gestão</h1>
+          <h1 className="text-2xl font-bold font-serif">Bem-vindo ao VitrinaHub</h1>
           <p className="opacity-90 mt-2">Vamos configurar os dados iniciais da sua loja para começarmos.</p>
         </div>
 

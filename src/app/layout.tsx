@@ -16,8 +16,8 @@ const fontBody = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Marka Gestão",
-  description: "ERP/SaaS para lojas de móveis",
+  title: "VitrinaHub",
+  description: "Sistema completo para gestão de lojas de móveis",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

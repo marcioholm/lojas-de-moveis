@@ -41,8 +41,8 @@ export default function LoginPage() {
               M
             </div>
             <div>
-              <b className="block text-gray-900 text-lg font-bold tracking-wider uppercase">Marka</b>
-              <small className="block text-[10px] tracking-[0.3em] uppercase text-gray-500">Gestão</small>
+              <b className="block text-gray-900 text-lg font-bold tracking-wider uppercase">Vitrina</b>
+              <small className="block text-[10px] tracking-[0.3em] uppercase text-gray-500">Hub</small>
             </div>
           </div>
           
@@ -153,7 +153,7 @@ export default function LoginPage() {
             
             <div className="p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
               <p className="italic text-sm text-white/90">
-                "Desde que implementamos o Marka Gestão, reduzimos nossas perdas de estoque a zero e dobramos a captação de leads online."
+                "Desde que implementamos o VitrinaHub, reduzimos nossas perdas de estoque a zero e dobramos a captação de leads online."
               </p>
               <div className="mt-4 flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-full"></div>

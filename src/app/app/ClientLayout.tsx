@@ -63,9 +63,9 @@ export default function ClientLayout({ children, userProfile }: { children: Reac
             <div className="w-9 h-9 rounded-full border-[1.5px] border-[var(--sidebar-accent)] flex items-center justify-center text-[var(--sidebar-accent)] font-serif font-bold text-lg">
               M
             </div>
-            <div>
-              <b className="block text-white text-sm font-bold tracking-wider uppercase">Marka</b>
-              <small className="block text-[8px] tracking-[0.3em] uppercase opacity-60">Gestão</small>
+            <div className="ml-3 transition-all duration-300">
+              <b className="block text-white text-sm font-bold tracking-wider uppercase">Vitrina</b>
+              <small className="block text-white/60 text-[9px] tracking-[0.3em] uppercase">Hub</small>
             </div>
           </div>
           <button className="md:hidden text-white" onClick={() => setSidebarOpen(false)}>
