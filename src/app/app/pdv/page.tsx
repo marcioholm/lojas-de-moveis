@@ -95,7 +95,7 @@ export default async function VendasPage() {
               sales.map((s) => (
                 <tr key={s.id}>
                   <td><b>{(s.id as string).split('-')[0].toUpperCase()}</b></td>
-                  <td>{s.customers?.nome || 'Cliente não informado'}</td>
+                  <td>{(s.customers as any)?.nome || 'Cliente não informado'}</td>
                   <td>
                     <span className={`badge ${
                       s.status === 'finalizado' ? 'badge-success' : 

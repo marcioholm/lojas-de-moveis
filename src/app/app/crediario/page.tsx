@@ -66,7 +66,7 @@ export default async function CrediarioPage() {
 
     return {
       id: sale.id as string,
-      customer: sale.customers?.nome || 'Cliente Removido',
+      customer: (sale.customers as any)?.nome || 'Cliente Removido',
       total: sale.total,
       installments: sortedInstallments,
       paidCount,
