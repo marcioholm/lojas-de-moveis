@@ -21,6 +21,7 @@ import { logout } from '../login/actions'
 
 const navigation = [
   { name: 'Visão Geral', href: '/app/dashboard', icon: LayoutDashboard },
+  { name: 'Leads', href: '/app/leads', icon: Users },
   { name: 'Estoque', href: '/app/estoque', icon: Package },
   { name: 'Clientes', href: '/app/clientes', icon: Users },
   { name: 'PDV Móvel', href: '/app/pdv-movel', icon: ShoppingCart },
