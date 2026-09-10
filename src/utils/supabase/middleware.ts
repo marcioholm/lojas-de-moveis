@@ -47,6 +47,23 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Force onboarding if setup is incomplete (wrapped in try/catch to avoid breaking if migration is missing)
+  if (user && request.nextUrl.pathname.startsWith('/app') && request.nextUrl.pathname !== '/app/onboarding') {
+    try {
+      const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single()
+      if (profile?.tenant_id) {
+        const { data: tenant } = await supabase.from('tenants').select('setup_concluido').eq('id', profile.tenant_id).single()
+        if (tenant && tenant.setup_concluido === false) {
+          const url = request.nextUrl.clone()
+          url.pathname = '/app/onboarding'
+          return NextResponse.redirect(url)
+        }
+      }
+    } catch(e) {
+      // Ignore if columns don't exist yet
+    }
+  }
+
   // If user goes to root, redirect to dashboard or login
   if (request.nextUrl.pathname === '/') {
     const url = request.nextUrl.clone()
