@@ -1,24 +1,50 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, Plus, Filter, FileText, CheckCircle } from 'lucide-react'
-import { mockContasPagar } from '@/lib/mockData'
+import { useState, useEffect } from 'react'
+import { Search, Plus, Filter, CheckCircle, Trash } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
 
 export default function ContasPagarPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [despesas, setDespesas] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredContas = mockContasPagar.filter(c => 
-    c.fornecedor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    async function fetchDespesas() {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .order('data_vencimento', { ascending: true })
+      
+      if (!error && data) {
+        const formatted = data.map((d: any) => ({
+          id: d.id.substring(0, 8).toUpperCase(),
+          real_id: d.id,
+          fornecedor: d.fornecedor,
+          descricao: d.descricao || '-',
+          vencimento: new Date(d.data_vencimento).toLocaleDateString('pt-BR'),
+          valor: Number(d.valor),
+          status: d.status === 'pago' ? 'Pago' : (new Date(d.data_vencimento) < new Date() ? 'Atrasado' : 'A Vencer')
+        }))
+        setDespesas(formatted)
+      }
+      setLoading(false)
+    }
+    fetchDespesas()
+  }, [])
+
+  const filteredDespesas = despesas.filter(d => 
+    d.fornecedor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.descricao.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (
     <div className="space-y-6 fade-in">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold font-serif text-[var(--text-primary)]">Contas a Pagar</h1>
-          <p className="text-[var(--text-muted)] text-sm">Controle de despesas, fornecedores e boletos</p>
+          <p className="text-[var(--text-muted)] text-sm">Controle de despesas fixas e fornecedores</p>
         </div>
         <div className="flex gap-3">
           <button className="btn-secondary flex items-center gap-2">
@@ -32,9 +58,7 @@ export default function ContasPagarPage() {
         </div>
       </div>
 
-      {/* Glass Panel Table */}
       <div className="glass-panel p-0 overflow-hidden">
-        {/* Toolbar */}
         <div className="p-4 border-b border-[var(--border)] flex items-center gap-4 bg-[var(--bg-inset)]">
           <div className="relative flex-1 max-w-md">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
@@ -48,13 +72,11 @@ export default function ContasPagarPage() {
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[var(--border)] bg-black/5 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
-                <th className="p-4 font-semibold">ID</th>
-                <th className="p-4 font-semibold">Fornecedor / Despesa</th>
+                <th className="p-4 font-semibold">Fornecedor / Categoria</th>
                 <th className="p-4 font-semibold">Descrição</th>
                 <th className="p-4 font-semibold">Vencimento</th>
                 <th className="p-4 font-semibold text-right">Valor</th>
@@ -63,41 +85,35 @@ export default function ContasPagarPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredContas.map((conta) => (
-                <tr key={conta.id} className="border-b border-[var(--border)] hover:bg-black/5 transition-colors group">
-                  <td className="p-4">
-                    <span className="font-mono text-sm font-medium text-[var(--text-secondary)]">{conta.id}</span>
-                  </td>
-                  <td className="p-4">
-                    <p className="text-sm font-medium text-[var(--text-primary)]">{conta.fornecedor}</p>
-                  </td>
-                  <td className="p-4 text-sm text-[var(--text-secondary)]">
-                    {conta.descricao}
-                  </td>
-                  <td className="p-4 text-sm text-[var(--text-secondary)]">
-                    {conta.vencimento}
-                  </td>
-                  <td className="p-4 text-sm font-bold text-[var(--danger)] text-right">
-                    R$ {conta.valor.toFixed(2).replace('.', ',')}
-                  </td>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="p-12 text-center text-[var(--text-muted)]">Carregando despesas...</td>
+                </tr>
+              ) : filteredDespesas.map((despesa) => (
+                <tr key={despesa.real_id} className="border-b border-[var(--border)] hover:bg-black/5 transition-colors group">
+                  <td className="p-4 font-medium text-sm text-[var(--text-primary)]">{despesa.fornecedor}</td>
+                  <td className="p-4 text-sm text-[var(--text-secondary)]">{despesa.descricao}</td>
+                  <td className="p-4 text-sm font-medium text-[var(--text-secondary)]">{despesa.vencimento}</td>
+                  <td className="p-4 text-sm font-bold text-[var(--danger)] text-right">R$ {despesa.valor.toFixed(2).replace('.', ',')}</td>
                   <td className="p-4">
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border
-                      ${conta.status === 'Pago' ? 'bg-[var(--success-bg)] text-[var(--success)] border-[var(--success)]/20' : 
+                      ${despesa.status === 'Pago' ? 'bg-[var(--success-bg)] text-[var(--success)] border-[var(--success)]/20' : 
+                        despesa.status === 'Atrasado' ? 'bg-[var(--danger-bg)] text-[var(--danger)] border-[var(--danger)]/20' :
                         'bg-[var(--warning-bg)] text-[var(--warning)] border-[var(--warning)]/20'}
                     `}>
-                      {conta.status}
+                      {despesa.status}
                     </span>
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-1.5 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-md transition-colors" title="Ver Comprovante/Anexo">
-                        <FileText size={16} />
-                      </button>
-                      {conta.status !== 'Pago' && (
+                      {despesa.status !== 'Pago' && (
                         <button className="p-1.5 text-[var(--text-muted)] hover:text-[var(--success)] hover:bg-[var(--success-bg)] rounded-md transition-colors" title="Dar Baixa">
                           <CheckCircle size={16} />
                         </button>
                       )}
+                      <button className="p-1.5 text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger-bg)] rounded-md transition-colors" title="Excluir">
+                        <Trash size={16} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -105,9 +121,9 @@ export default function ContasPagarPage() {
             </tbody>
           </table>
           
-          {filteredContas.length === 0 && (
+          {!loading && filteredDespesas.length === 0 && (
             <div className="p-12 text-center text-[var(--text-muted)]">
-              Nenhuma conta encontrada.
+              Nenhuma despesa encontrada.
             </div>
           )}
         </div>

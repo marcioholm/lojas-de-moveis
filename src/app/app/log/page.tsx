@@ -1,16 +1,52 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Terminal, Activity, ShieldAlert } from 'lucide-react'
-
-const mockLogs = [
-  { id: 'LOG-001', usuario: 'Márcio Holm', acao: 'Acesso ao Sistema', detalhes: 'Login realizado com sucesso', ip: '192.168.1.45', data: '10/11/2023 09:30:15', nivel: 'info' },
-  { id: 'LOG-002', usuario: 'Carlos Silva', acao: 'Exclusão de Registro', detalhes: 'Venda VD-1025 cancelada manualmente', ip: '192.168.1.102', data: '10/11/2023 09:15:22', nivel: 'warning' },
-  { id: 'LOG-003', usuario: 'Sistema', acao: 'Sincronização Falhou', detalhes: 'Timeout ao conectar com servidor de NFe', ip: 'localhost', data: '10/11/2023 08:00:00', nivel: 'error' },
-]
+import { createClient } from '@/utils/supabase/client'
 
 export default function LogsPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [logs, setLogs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchLogs() {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('system_logs')
+        .select(`
+          id,
+          acao,
+          detalhes,
+          ip_address,
+          nivel,
+          created_at,
+          profiles ( nome )
+        `)
+        .order('created_at', { ascending: false })
+      
+      if (!error && data) {
+        const formatted = data.map((log: any) => ({
+          id: log.id.substring(0, 8).toUpperCase(),
+          real_id: log.id,
+          usuario: log.profiles?.nome || 'Sistema',
+          acao: log.acao,
+          detalhes: log.detalhes,
+          ip: log.ip_address || 'localhost',
+          data: new Date(log.created_at).toLocaleString('pt-BR'),
+          nivel: log.nivel
+        }))
+        setLogs(formatted)
+      }
+      setLoading(false)
+    }
+    fetchLogs()
+  }, [])
+
+  const filteredLogs = logs.filter(log => 
+    log.usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.acao.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
     <div className="space-y-6 fade-in">
@@ -47,8 +83,12 @@ export default function LogsPage() {
               </tr>
             </thead>
             <tbody>
-              {mockLogs.map((log) => (
-                <tr key={log.id} className="border-b border-[var(--border)] hover:bg-black/5 transition-colors font-mono text-xs">
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="p-12 text-center text-[var(--text-muted)]">Carregando logs de auditoria...</td>
+                </tr>
+              ) : filteredLogs.map((log) => (
+                <tr key={log.real_id} className="border-b border-[var(--border)] hover:bg-black/5 transition-colors font-mono text-xs">
                   <td className="p-4 text-center">
                     {log.nivel === 'info' && <Activity size={16} className="text-[var(--info)] mx-auto" />}
                     {log.nivel === 'warning' && <ShieldAlert size={16} className="text-[var(--warning)] mx-auto" />}
@@ -65,6 +105,12 @@ export default function LogsPage() {
               ))}
             </tbody>
           </table>
+          
+          {!loading && filteredLogs.length === 0 && (
+            <div className="p-12 text-center text-[var(--text-muted)]">
+              Nenhum log registrado.
+            </div>
+          )}
         </div>
       </div>
     </div>

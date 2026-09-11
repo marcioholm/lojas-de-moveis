@@ -1,17 +1,44 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Plus, UserCog, Edit, Trash, Shield } from 'lucide-react'
-
-const mockUsuarios = [
-  { id: 'US-01', nome: 'Márcio Holm', email: 'marcio@vitrinahub.com', papel: 'Administrador (Dono)', status: 'Ativo', ultimoAcesso: 'Hoje, 09:30' },
-  { id: 'US-02', nome: 'Ana Beatriz', email: 'ana@vitrinahub.com', papel: 'Vendedora', status: 'Ativo', ultimoAcesso: 'Hoje, 08:45' },
-  { id: 'US-03', nome: 'Carlos Silva', email: 'carlos@vitrinahub.com', papel: 'Vendedor', status: 'Ativo', ultimoAcesso: 'Ontem, 18:10' },
-  { id: 'US-04', nome: 'Roberto Oliveira', email: 'roberto@vitrinahub.com', papel: 'Caixa / Financeiro', status: 'Inativo', ultimoAcesso: '15/10/2023' },
-]
+import { createClient } from '@/utils/supabase/client'
 
 export default function UsuariosPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [usuarios, setUsuarios] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchUsuarios() {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('nome', { ascending: true })
+      
+      if (!error && data) {
+        const formatted = data.map((u: any) => ({
+          id: u.id,
+          nome: u.nome,
+          email: u.email,
+          papel: u.role === 'dono' ? 'Administrador (Dono)' : 
+                 u.role === 'vendedor' ? 'Vendedor' : 
+                 u.role === 'estoquista' ? 'Estoquista' : 'Caixa / Financeiro',
+          status: 'Ativo',
+          ultimoAcesso: new Date(u.created_at).toLocaleDateString('pt-BR') // Mock for last login
+        }))
+        setUsuarios(formatted)
+      }
+      setLoading(false)
+    }
+    fetchUsuarios()
+  }, [])
+
+  const filteredUsuarios = usuarios.filter(u => 
+    u.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
     <div className="space-y-6 fade-in">
@@ -48,17 +75,21 @@ export default function UsuariosPage() {
               <tr className="border-b border-[var(--border)] bg-black/5 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
                 <th className="p-4 font-semibold">Usuário</th>
                 <th className="p-4 font-semibold">Papel / Permissão</th>
-                <th className="p-4 font-semibold">Último Acesso</th>
+                <th className="p-4 font-semibold">Membro Desde</th>
                 <th className="p-4 font-semibold">Status</th>
                 <th className="p-4 font-semibold text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {mockUsuarios.map((user) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="p-12 text-center text-[var(--text-muted)]">Carregando usuários...</td>
+                </tr>
+              ) : filteredUsuarios.map((user) => (
                 <tr key={user.id} className="border-b border-[var(--border)] hover:bg-black/5 transition-colors group">
                   <td className="p-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold font-serif text-sm">
-                      {user.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                      {user.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <p className="text-sm font-bold text-[var(--text-primary)]">{user.nome}</p>
@@ -97,6 +128,12 @@ export default function UsuariosPage() {
               ))}
             </tbody>
           </table>
+          
+          {!loading && filteredUsuarios.length === 0 && (
+            <div className="p-12 text-center text-[var(--text-muted)]">
+              Nenhum usuário encontrado.
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,13 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Plus, Filter, FileText, ArrowUpRight } from 'lucide-react'
-import { mockSales } from '@/lib/mockData'
+import { createClient } from '@/utils/supabase/client'
 
 export default function VendasPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [sales, setSales] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredSales = mockSales.filter(s => 
+  useEffect(() => {
+    async function fetchSales() {
+      const supabase = createClient()
+      // Real life: JOIN with customers to get the name, and profiles to get the seller name.
+      const { data, error } = await supabase
+        .from('sales')
+        .select(`
+          id,
+          total,
+          forma_pagamento,
+          status,
+          created_at,
+          customers ( nome ),
+          profiles ( nome )
+        `)
+        .order('created_at', { ascending: false })
+      
+      if (!error && data) {
+        // Map data to match the UI structure
+        const formatted = data.map((item: any) => ({
+          id: item.id.substring(0, 8).toUpperCase(),
+          real_id: item.id,
+          cliente: item.customers?.nome || 'Cliente não encontrado',
+          vendedor: item.profiles?.nome || 'Não atribuído',
+          data: new Date(item.created_at).toLocaleString('pt-BR'),
+          valor: Number(item.total),
+          formaPagamento: item.forma_pagamento || 'N/A',
+          status: item.status === 'pendente_aprovacao' ? 'Aguardando Análise' : 
+                  item.status === 'aprovado' ? 'Aprovada' :
+                  item.status === 'rejeitado' ? 'Cancelada' : 'Finalizado'
+        }))
+        setSales(formatted)
+      }
+      setLoading(false)
+    }
+    fetchSales()
+  }, [])
+
+  const filteredSales = sales.filter(s => 
     s.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.cliente.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -32,44 +72,41 @@ export default function VendasPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - for now static numbers until we build the real dashboard logic */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="glass-panel p-4 flex flex-col gap-2 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <FileText size={64} />
           </div>
           <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Vendas Hoje</p>
-          <h3 className="text-2xl font-bold font-serif text-[var(--text-primary)]">14</h3>
-          <p className="text-xs text-[var(--success)] flex items-center gap-1 font-medium">
-            <ArrowUpRight size={12} />
-            +12% vs ontem
-          </p>
+          <h3 className="text-2xl font-bold font-serif text-[var(--text-primary)]">{sales.length}</h3>
         </div>
         <div className="glass-panel p-4 flex flex-col gap-2 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <FileText size={64} />
           </div>
           <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Faturamento Hoje</p>
-          <h3 className="text-2xl font-bold font-serif text-[var(--text-primary)]">R$ 12.450</h3>
-          <p className="text-xs text-[var(--success)] flex items-center gap-1 font-medium">
-            <ArrowUpRight size={12} />
-            +5% vs ontem
-          </p>
+          <h3 className="text-2xl font-bold font-serif text-[var(--text-primary)]">
+            R$ {sales.reduce((acc, curr) => acc + curr.valor, 0).toFixed(2).replace('.', ',')}
+          </h3>
         </div>
         <div className="glass-panel p-4 flex flex-col gap-2 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <FileText size={64} />
           </div>
           <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Ticket Médio</p>
-          <h3 className="text-2xl font-bold font-serif text-[var(--text-primary)]">R$ 889,00</h3>
+          <h3 className="text-2xl font-bold font-serif text-[var(--text-primary)]">
+            R$ {(sales.length > 0 ? (sales.reduce((acc, curr) => acc + curr.valor, 0) / sales.length) : 0).toFixed(2).replace('.', ',')}
+          </h3>
         </div>
         <div className="glass-panel p-4 flex flex-col gap-2 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <FileText size={64} />
           </div>
           <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Aguardando Análise</p>
-          <h3 className="text-2xl font-bold font-serif text-[var(--warning)]">3</h3>
-          <p className="text-xs text-[var(--text-muted)] font-medium">Vendas no Crediário</p>
+          <h3 className="text-2xl font-bold font-serif text-[var(--warning)]">
+            {sales.filter(s => s.status === 'Aguardando Análise').length}
+          </h3>
         </div>
       </div>
 
@@ -105,10 +142,14 @@ export default function VendasPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredSales.map((sale) => (
-                <tr key={sale.id} className="border-b border-[var(--border)] hover:bg-black/5 transition-colors group">
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="p-12 text-center text-[var(--text-muted)]">Carregando vendas...</td>
+                </tr>
+              ) : filteredSales.map((sale) => (
+                <tr key={sale.real_id} className="border-b border-[var(--border)] hover:bg-black/5 transition-colors group">
                   <td className="p-4">
-                    <span className="font-mono text-sm font-medium text-[var(--primary)]">{sale.id}</span>
+                    <span className="font-mono text-sm font-medium text-[var(--primary)]">VD-{sale.id}</span>
                   </td>
                   <td className="p-4">
                     <p className="text-sm font-medium text-[var(--text-primary)]">{sale.cliente}</p>
@@ -146,9 +187,9 @@ export default function VendasPage() {
             </tbody>
           </table>
           
-          {filteredSales.length === 0 && (
+          {!loading && filteredSales.length === 0 && (
             <div className="p-12 text-center text-[var(--text-muted)]">
-              Nenhuma venda encontrada.
+              Nenhuma venda encontrada no sistema.
             </div>
           )}
         </div>

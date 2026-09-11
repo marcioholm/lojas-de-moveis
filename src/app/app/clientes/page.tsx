@@ -1,15 +1,33 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, Plus, Filter, MessageSquare, Phone, MoreHorizontal, Edit, FileText } from 'lucide-react'
-import { mockClients } from '@/lib/mockData'
+import { useState, useEffect } from 'react'
+import { Search, Plus, Filter, MessageSquare, Phone, FileText, Edit } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
 
 export default function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [clientes, setClientes] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredClients = mockClients.filter(c => 
-    c.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.cpf.includes(searchTerm)
+  useEffect(() => {
+    async function fetchClientes() {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .order('nome', { ascending: true })
+      
+      if (!error && data) {
+        setClientes(data)
+      }
+      setLoading(false)
+    }
+    fetchClientes()
+  }, [])
+
+  const filteredClients = clientes.filter(c => 
+    c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.cpf_cnpj?.includes(searchTerm)
   )
 
   return (
@@ -56,41 +74,37 @@ export default function ClientesPage() {
                 <th className="p-4 font-semibold">Cliente</th>
                 <th className="p-4 font-semibold">Contato</th>
                 <th className="p-4 font-semibold">Localização</th>
-                <th className="p-4 font-semibold">Última Compra</th>
-                <th className="p-4 font-semibold text-right">Total Comprado</th>
+                <th className="p-4 font-semibold">Limite de Crédito</th>
                 <th className="p-4 font-semibold">Status</th>
                 <th className="p-4 font-semibold text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {filteredClients.map((client) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="p-12 text-center text-[var(--text-muted)]">Carregando clientes...</td>
+                </tr>
+              ) : filteredClients.map((client) => (
                 <tr key={client.id} className="border-b border-[var(--border)] hover:bg-black/5 transition-colors group">
                   <td className="p-4">
                     <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-[var(--primary)] transition-colors">{client.nome}</p>
-                    <p className="text-xs text-[var(--text-muted)]">CPF: {client.cpf}</p>
+                    <p className="text-xs text-[var(--text-muted)]">CPF/CNPJ: {client.cpf_cnpj || 'Não informado'}</p>
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
                       <Phone size={14} className="text-[var(--text-muted)]" />
-                      <span className="text-sm text-[var(--text-secondary)]">{client.telefone}</span>
+                      <span className="text-sm text-[var(--text-secondary)]">{client.whatsapp || 'Não informado'}</span>
                     </div>
                   </td>
-                  <td className="p-4 text-sm text-[var(--text-secondary)]">
-                    {client.cidade}
+                  <td className="p-4 text-sm text-[var(--text-secondary)] truncate max-w-[200px]">
+                    {client.endereco || 'Não informado'}
                   </td>
-                  <td className="p-4 text-sm text-[var(--text-secondary)]">
-                    {new Date(client.ultimaCompra).toLocaleDateString('pt-BR')}
-                  </td>
-                  <td className="p-4 text-sm font-medium text-[var(--text-primary)] text-right">
-                    R$ {client.totalComprado.toFixed(2).replace('.', ',')}
+                  <td className="p-4 text-sm font-medium text-[var(--text-primary)]">
+                    R$ {Number(client.limite_credito || 0).toFixed(2).replace('.', ',')}
                   </td>
                   <td className="p-4">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border
-                      ${client.status === 'Ativo' ? 'bg-[var(--success-bg)] text-[var(--success)] border-[var(--success)]/20' : 
-                        client.status === 'Inadimplente' ? 'bg-[var(--danger-bg)] text-[var(--danger)] border-[var(--danger)]/20' : 
-                        'bg-black/5 text-[var(--text-secondary)] border-black/10'}
-                    `}>
-                      {client.status}
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-[var(--success-bg)] text-[var(--success)] border-[var(--success)]/20">
+                      Ativo
                     </span>
                   </td>
                   <td className="p-4 text-right">
@@ -111,20 +125,11 @@ export default function ClientesPage() {
             </tbody>
           </table>
           
-          {filteredClients.length === 0 && (
+          {!loading && filteredClients.length === 0 && (
             <div className="p-12 text-center text-[var(--text-muted)]">
               Nenhum cliente encontrado.
             </div>
           )}
-        </div>
-        
-        {/* Pagination */}
-        <div className="p-4 border-t border-[var(--border)] flex items-center justify-between bg-[var(--bg-inset)]">
-          <p className="text-xs text-[var(--text-muted)]">Mostrando <strong className="text-[var(--text-primary)]">{filteredClients.length}</strong> clientes</p>
-          <div className="flex gap-1">
-            <button className="px-3 py-1 text-sm border border-[var(--border)] rounded-md bg-white hover:bg-[var(--bg-inset)] disabled:opacity-50" disabled>Anterior</button>
-            <button className="px-3 py-1 text-sm border border-[var(--border)] rounded-md bg-white hover:bg-[var(--bg-inset)]">Próxima</button>
-          </div>
         </div>
       </div>
     </div>
