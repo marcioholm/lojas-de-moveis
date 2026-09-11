@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useState } from 'react'
+import { ReactNode, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -34,21 +34,46 @@ const navigation = [
   { name: 'Configurações', href: '/app/config', icon: Settings },
 ]
 
-export default function ClientLayout({ children, userProfile }: { children: ReactNode, userProfile?: any }) {
+// Map paths to breadcrumb labels
+function getBreadcrumb(pathname: string) {
+  // Check navigation items first
+  const navItem = navigation.find(item => pathname.startsWith(item.href))
+  if (navItem) return navItem.name
+
+  // Special sub-routes
+  if (pathname.startsWith('/app/config/usuarios')) return 'Equipe e Acessos'
+
+  return 'Dashboard'
+}
+
+export default function ClientLayout({ children, userProfile }: { children: ReactNode, userProfile?: { nome?: string, role?: string } }) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   if (pathname === '/app/onboarding') {
-    return <>{children}</> // Oculta o layout inteiro se for a tela de onboarding
+    return <>{children}</>
+  }
+
+  const currentPage = getBreadcrumb(pathname)
+  const initials = userProfile?.nome
+    ? userProfile.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+    : 'US'
+
+  const roleLabels: Record<string, string> = {
+    dono: 'Administrador',
+    vendedor: 'Vendedor',
+    caixa: 'Caixa',
+    estoquista: 'Estoquista',
+    entregador: 'Entregador',
   }
 
   return (
     <div className="flex min-h-screen bg-[var(--bg)] text-[var(--text-primary)] font-body">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/50 md:hidden" 
-          onClick={() => setSidebarOpen(false)} 
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
         />
       )}
 
@@ -81,10 +106,11 @@ export default function ClientLayout({ children, userProfile }: { children: Reac
               <Link
                 key={item.name}
                 href={item.href}
+                onClick={() => setSidebarOpen(false)}
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors relative
-                  ${isActive 
-                    ? 'bg-white/10 text-[var(--sidebar-active)]' 
+                  ${isActive
+                    ? 'bg-white/10 text-[var(--sidebar-active)]'
                     : 'hover:bg-white/5 hover:text-[var(--sidebar-active)]'}
                 `}
               >
@@ -101,14 +127,14 @@ export default function ClientLayout({ children, userProfile }: { children: Reac
         <div className="p-4 border-t border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[var(--sidebar-accent)] text-[var(--sidebar-bg)] flex items-center justify-center font-bold text-[11px]">
-              US
+              {initials}
             </div>
             <div>
-              <b className="block text-white text-[11px]">Usuário</b>
-              <small className="block text-[9px] opacity-80">Vendedor</small>
+              <b className="block text-white text-[11px]">{userProfile?.nome || 'Usuário'}</b>
+              <small className="block text-[9px] opacity-80">{roleLabels[userProfile?.role || ''] || 'Membro'}</small>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => logout()}
             className="text-[var(--sidebar-text)] hover:text-white"
             title="Sair"
@@ -127,7 +153,7 @@ export default function ClientLayout({ children, userProfile }: { children: Reac
               <Menu size={22} />
             </button>
             <div className="text-[11px] text-[var(--text-muted)] hidden sm:block">
-              Visão Geral / <strong className="text-[var(--text-primary)] font-semibold">Dashboard</strong>
+              App / <strong className="text-[var(--text-primary)] font-semibold">{currentPage}</strong>
             </div>
           </div>
           <div className="flex items-center gap-3">

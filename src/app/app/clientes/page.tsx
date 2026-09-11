@@ -1,8 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
-import { Plus, Search, Eye, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Eye, Edit2, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { CustomerModal } from '@/components/modals/CustomerModal'
 import { deleteCustomer } from '@/app/app/actions'
+import { SearchInput } from '@/components/SearchInput'
 
 export default async function ClientesPage({
   searchParams,
@@ -40,13 +41,7 @@ export default async function ClientesPage({
 
       <CustomerModal />
 
-      <div className="search-bar">
-        <Search size={16} />
-        <input 
-          placeholder="Buscar por nome ou telefone..." 
-          defaultValue={query}
-        />
-      </div>
+      <SearchInput placeholder="Buscar por nome ou telefone..." />
 
       <div className="panel table-panel">
         <table className="data-table">

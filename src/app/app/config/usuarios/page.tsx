@@ -1,78 +1,110 @@
-'use client'
-
-import { useState } from 'react'
+import { createClient } from '@/utils/supabase/server'
 import { inviteUser } from './actions'
+import { Users, Shield, UserPlus } from 'lucide-react'
+import { InviteForm } from './InviteForm'
 
-export default function UsuariosPage() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
+const roleLabels: Record<string, string> = {
+  dono: 'Dono / Admin',
+  vendedor: 'Vendedor(a)',
+  caixa: 'Caixa',
+  estoquista: 'Estoquista',
+  entregador: 'Entregador(a)',
+}
 
-  async function handleSubmit(formData: FormData) {
-    setLoading(true)
-    setError(null)
-    setSuccess(null)
+const roleColors: Record<string, string> = {
+  dono: 'bg-purple-100 text-purple-700',
+  vendedor: 'bg-blue-100 text-blue-700',
+  caixa: 'bg-green-100 text-green-700',
+  estoquista: 'bg-orange-100 text-orange-700',
+  entregador: 'bg-gray-100 text-gray-700',
+}
 
-    const result = await inviteUser(formData)
+export default async function UsuariosPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
 
-    if (result.error) {
-      setError(result.error)
-    } else if (result.success) {
-      setSuccess(result.success)
-    }
+  // Get current user's profile and tenant
+  const { data: currentProfile } = await supabase
+    .from('profiles')
+    .select('tenant_id, role')
+    .eq('id', user.id)
+    .single()
 
-    setLoading(false)
+  if (!currentProfile?.tenant_id) {
+    return (
+      <div className="p-8 text-center text-gray-500">
+        Perfil não encontrado. Complete o onboarding primeiro.
+      </div>
+    )
   }
 
+  // Fetch all team members from this tenant
+  const { data: teamMembers } = await supabase
+    .from('profiles')
+    .select('id, nome, email, role, telefone, created_at')
+    .eq('tenant_id', currentProfile.tenant_id)
+    .order('created_at', { ascending: true })
+
+  const isOwner = currentProfile.role === 'dono'
+
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 font-serif">Equipe e Acessos</h1>
-        <p className="text-gray-500 mt-1">Gerencie quem tem acesso ao painel da sua loja.</p>
+    <div className="p-8 max-w-4xl mx-auto space-y-8">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg flex items-center justify-center">
+          <Users size={20} />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Equipe e Acessos</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Gerencie quem tem acesso ao painel da sua loja.</p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Convidar novo membro</h2>
-        <form action={handleSubmit} className="flex items-start gap-4">
-          <div className="flex-1">
-            <label className="sr-only">E-mail</label>
-            <input
-              type="email"
-              name="email"
-              required
-              placeholder="E-mail do novo membro"
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2.5 bg-[var(--primary)] text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-[var(--primary-hover)] transition-all disabled:opacity-70 whitespace-nowrap"
-          >
-            {loading ? 'Enviando...' : 'Enviar Convite'}
-          </button>
-        </form>
-        
-        {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg font-medium border border-red-100">
-            {error}
-          </div>
-        )}
-        
-        {success && (
-          <div className="mt-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg font-medium border border-green-200">
-            {success}
-          </div>
-        )}
-      </div>
+      {isOwner && (
+        <InviteForm />
+      )}
 
+      {/* Team Members List */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Usuários Ativos</h2>
+          <span className="text-xs text-gray-500">{teamMembers?.length || 0} membro{(teamMembers?.length || 0) !== 1 ? 's' : ''}</span>
         </div>
-        <div className="p-8 text-center text-gray-500 text-sm">
-          A lista de usuários ativos será exibida aqui futuramente.
-        </div>
+
+        {teamMembers && teamMembers.length > 0 ? (
+          <div className="divide-y divide-gray-100">
+            {teamMembers.map((member) => (
+              <div key={member.id} className="px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold text-sm">
+                    {member.nome?.substring(0, 2).toUpperCase() || '??'}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900 text-sm">
+                      {member.nome}
+                      {member.id === user.id && (
+                        <span className="ml-2 text-xs text-gray-400">(você)</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-500">{member.email}</div>
+                    {member.telefone && (
+                      <div className="text-xs text-gray-400">{member.telefone}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${roleColors[member.role] || 'bg-gray-100 text-gray-700'}`}>
+                    {roleLabels[member.role] || member.role}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center text-gray-500 text-sm">
+            Nenhum usuário encontrado.
+          </div>
+        )}
       </div>
     </div>
   )

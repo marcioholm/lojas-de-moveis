@@ -1,8 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
-import { Plus, Search, Box, Download, Eye, Share2, Edit2, Trash2, EyeOff } from 'lucide-react'
+import { Plus, Box, Download, Eye, Edit2, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { ProductModal } from '@/components/modals/ProductModal'
 import { deleteProduct } from '@/app/app/actions'
+import { SearchInput } from '@/components/SearchInput'
 
 function formatMoney(value: number | null) {
   if (!value) return 'R$ 0,00'
@@ -49,14 +50,7 @@ export default async function EstoquePage({
 
       <ProductModal />
 
-      <div className="search-bar">
-        <Search size={16} />
-        <input 
-          placeholder="Buscar por produto ou categoria..." 
-          defaultValue={query}
-          // In a real app, you would wire this to router.push('?q=' + val) on client
-        />
-      </div>
+      <SearchInput placeholder="Buscar por produto ou categoria..." />
 
       <div className="panel table-panel">
         <table className="data-table">

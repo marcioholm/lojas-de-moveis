@@ -25,6 +25,23 @@ export default async function VendasPage() {
     `)
     .order('created_at', { ascending: false })
 
+  // Calculate KPIs from real data
+  const totalVendido = (sales || [])
+    .filter(s => s.status === 'aprovado' || s.status === 'finalizado')
+    .reduce((sum, s) => sum + Number(s.total), 0)
+
+  const totalRecebido = (sales || [])
+    .filter(s => s.status === 'finalizado')
+    .reduce((sum, s) => sum + Number(s.total), 0)
+
+  // Count pending installments
+  const { data: pendingInstallments } = await supabase
+    .from('installments')
+    .select('id')
+    .eq('status', 'pendente')
+
+  const boletosAberto = (pendingInstallments || []).length
+
   return (
     <div>
       <div className="page-head">
@@ -51,7 +68,7 @@ export default async function VendasPage() {
           </div>
           <div>
             <div className="kpi-label">Vendido</div>
-            <div className="kpi-value">{formatMoney(6779)}</div>
+            <div className="kpi-value">{formatMoney(totalVendido)}</div>
             <div className="kpi-detail">No período</div>
           </div>
         </div>
@@ -61,7 +78,7 @@ export default async function VendasPage() {
           </div>
           <div>
             <div className="kpi-label">Boletos internos</div>
-            <div className="kpi-value">18</div>
+            <div className="kpi-value">{boletosAberto}</div>
             <div className="kpi-detail">Em aberto</div>
           </div>
         </div>
@@ -71,7 +88,7 @@ export default async function VendasPage() {
           </div>
           <div>
             <div className="kpi-label">Recebido</div>
-            <div className="kpi-value">{formatMoney(5410)}</div>
+            <div className="kpi-value">{formatMoney(totalRecebido)}</div>
             <div className="kpi-detail">No período</div>
           </div>
         </div>
@@ -98,8 +115,8 @@ export default async function VendasPage() {
                   <td>{(s.customers as any)?.nome || 'Cliente não informado'}</td>
                   <td>
                     <span className={`badge ${
-                      s.status === 'finalizado' ? 'badge-success' : 
-                      s.status === 'aprovado' ? 'badge-info' : 
+                      s.status === 'finalizado' ? 'badge-success' :
+                      s.status === 'aprovado' ? 'badge-info' :
                       s.status === 'rejeitado' ? 'badge-danger' : 'badge-warning'
                     }`}>
                       {s.status.replace('_', ' ').toUpperCase()}

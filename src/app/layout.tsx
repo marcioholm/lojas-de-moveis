@@ -1,20 +1,5 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, DM_Sans } from "next/font/google";
 import "./globals.css";
-
-const fontDisplay = Instrument_Serif({
-  weight: ["400"],
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-  variable: "--font-display",
-});
-
-const fontBody = DM_Sans({
-  weight: ["400", "500", "700"],
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-  variable: "--font-body",
-});
 
 export const metadata: Metadata = {
   title: "VitrinaHub",
@@ -23,10 +8,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="pt-BR"
-      className={`${fontDisplay.variable} ${fontBody.variable} antialiased`}
-    >
+    <html lang="pt-BR" className="antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Instrument+Serif:ital,wght@0,400;1,400&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="font-body bg-[var(--bg)] text-[var(--text-primary)]">
         {children}
       </body>

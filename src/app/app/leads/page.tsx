@@ -1,23 +1,35 @@
 import { createClient } from '@/utils/supabase/server'
-import { Filter, Users, Phone, Package, Clock, CheckCircle } from 'lucide-react'
+import { Users, Phone, Package, Clock } from 'lucide-react'
 
 export default async function LeadsPage() {
   const supabase = await createClient()
 
-  // Fetch leads
-  // Since leads might not exist if migration didn't run, we try/catch
+  // Fetch leads - handle both status and status_funil column names
   let leads: any[] = []
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('leads')
       .select('*, product:products(nome)')
       .order('created_at', { ascending: false })
-    leads = data || []
+
+    if (error) {
+      // Try without product join if products relation doesn't exist
+      const { data: fallback } = await supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false })
+      leads = fallback || []
+    } else {
+      leads = data || []
+    }
   } catch (e) {}
 
-  const novos = leads.filter(l => l.status === 'novo')
-  const emAtendimento = leads.filter(l => l.status === 'em_atendimento')
-  const convertidos = leads.filter(l => l.status === 'convertido')
+  // Normalize status field - handle both status and status_funil
+  const getStatus = (lead: any) => lead.status || lead.status_funil || 'novo'
+
+  const novos = leads.filter(l => getStatus(l) === 'novo')
+  const emAtendimento = leads.filter(l => getStatus(l) === 'em_atendimento')
+  const convertidos = leads.filter(l => getStatus(l) === 'convertido')
 
   const columns = [
     { title: 'Novos Leads', status: 'novo', data: novos, color: 'bg-blue-50 border-blue-200 text-blue-700' },
@@ -26,10 +38,10 @@ export default async function LeadsPage() {
   ]
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold font-serif text-[var(--primary)]">Gestão de Leads</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Gestão de Leads</h1>
           <p className="text-sm text-gray-500 mt-1">Acompanhe os clientes interessados vindos da vitrine online</p>
         </div>
       </div>
@@ -41,12 +53,12 @@ export default async function LeadsPage() {
               {col.title}
               <span className="bg-white/50 px-2 py-0.5 rounded text-sm">{col.data.length}</span>
             </div>
-            
+
             <div className="p-4 flex-1 overflow-y-auto space-y-3 bg-gray-50/50">
               {col.data.length === 0 ? (
                 <div className="text-center text-gray-400 text-sm py-10">Nenhum lead nesta etapa</div>
               ) : (
-                col.data.map(lead => (
+                col.data.map((lead: any) => (
                   <div key={lead.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-2">
                       <div className="font-semibold text-gray-900 flex items-center gap-2">
@@ -58,22 +70,27 @@ export default async function LeadsPage() {
                         {new Date(lead.created_at).toLocaleDateString('pt-BR')}
                       </div>
                     </div>
-                    
-                    <div className="text-sm text-gray-600 flex items-center gap-2 mb-3">
-                      <Package size={14} className="text-gray-400" />
-                      {lead.product?.nome || 'Produto Indefinido'}
-                    </div>
 
-                    <div className="flex gap-2">
-                      <a 
-                        href={`https://wa.me/${lead.whatsapp.replace(/\D/g, '')}`}
-                        target="_blank"
-                        className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 py-1.5 rounded-md text-xs font-semibold flex justify-center items-center gap-1 transition-colors"
-                      >
-                        <Phone size={12} />
-                        WhatsApp
-                      </a>
-                    </div>
+                    {lead.product?.nome && (
+                      <div className="text-sm text-gray-600 flex items-center gap-2 mb-3">
+                        <Package size={14} className="text-gray-400" />
+                        {lead.product.nome}
+                      </div>
+                    )}
+
+                    {lead.whatsapp && (
+                      <div className="flex gap-2">
+                        <a
+                          href={`https://wa.me/${lead.whatsapp.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 py-1.5 rounded-md text-xs font-semibold flex justify-center items-center gap-1 transition-colors"
+                        >
+                          <Phone size={12} />
+                          WhatsApp
+                        </a>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
