@@ -1,31 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { login, signUp } from './actions'
+import Link from 'next/link'
+import { login } from './actions'
 
 export default function LoginPage() {
-  const [tab, setTab] = useState<'login' | 'signup'>('login')
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(formData: FormData) {
     setLoading(true)
     setError(null)
-    setSuccess(null)
     
-    if (tab === 'login') {
-      const result = await login(formData)
-      if (result?.error) {
-        setError(result.error)
-      }
-    } else {
-      const result = await signUp(formData)
-      if (result?.error) {
-        setError(result.error)
-      } else if (result?.success) {
-        setSuccess(result.success)
-      }
+    const result = await login(formData)
+    if (result?.error) {
+      setError(result.error)
     }
     setLoading(false)
   }
@@ -48,27 +37,23 @@ export default function LoginPage() {
           <div className="flex gap-6 mb-10 border-b border-gray-200">
             <button 
               type="button"
-              onClick={() => setTab('login')}
-              className={`pb-3 font-semibold text-sm border-b-2 transition-all ${tab === 'login' ? 'border-[var(--primary)] text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              className="pb-3 font-semibold text-sm border-b-2 transition-all border-[var(--primary)] text-gray-900"
             >
               Entrar
             </button>
-            <button 
-              type="button"
-              onClick={() => setTab('signup')}
-              className={`pb-3 font-semibold text-sm border-b-2 transition-all ${tab === 'signup' ? 'border-[var(--primary)] text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+            <Link 
+              href="/signup"
+              className="pb-3 font-semibold text-sm border-b-2 transition-all border-transparent text-gray-400 hover:text-gray-600"
             >
               Criar Conta
-            </button>
+            </Link>
           </div>
 
           <h1 className="font-sans text-3xl font-bold tracking-tight mb-2 text-gray-900">
-            {tab === 'login' ? 'Bem-vindo ao VitrinaHub' : 'Comece agora'}
+            Bem-vindo ao VitrinaHub
           </h1>
           <p className="text-gray-500 text-sm mb-10">
-            {tab === 'login' 
-              ? 'A gestão da sua loja de móveis de forma inteligente.' 
-              : 'Crie seu acesso administrativo para configurar a sua loja.'}
+            A gestão da sua loja de móveis de forma inteligente.
           </p>
           
           <form action={handleSubmit} className="flex flex-col gap-5">
@@ -99,29 +84,19 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
-            
-            {success && (
-              <div className="p-3 bg-green-50 text-green-700 text-sm rounded-xl font-medium border border-green-200">
-                {success}
-              </div>
-            )}
 
             <button
               type="submit"
               disabled={loading}
               className="mt-6 w-full py-4 px-4 bg-[var(--primary)] text-white font-medium text-[15px] rounded-xl hover:bg-[var(--primary-hover)] transition-all shadow-lg shadow-[var(--primary)]/20 disabled:opacity-70 flex justify-center active:scale-[0.98]"
             >
-              {loading 
-                ? 'Processando...' 
-                : tab === 'login' ? 'Entrar no Sistema' : 'Criar minha conta'}
+              {loading ? 'Processando...' : 'Entrar no Sistema'}
             </button>
           </form>
           
-          {tab === 'login' && (
-            <p className="text-sm font-medium text-gray-600 mt-6 text-center cursor-pointer hover:text-gray-900 transition-colors">
-              Esqueceu sua senha?
-            </p>
-          )}
+          <p className="text-sm font-medium text-gray-600 mt-6 text-center cursor-pointer hover:text-gray-900 transition-colors">
+            Esqueceu sua senha?
+          </p>
         </div>
       </div>
 

@@ -27,20 +27,3 @@ export async function logout() {
   await supabase.auth.signOut()
   redirect('/login')
 }
-
-export async function signUp(formData: FormData) {
-  const supabase = await createClient()
-
-  const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-  }
-
-  const { error } = await supabase.auth.signUp(data)
-
-  if (error) {
-    return { error: error.message }
-  }
-
-  return { success: 'Conta criada! Verifique seu e-mail para confirmar (ou faça login se a auto-confirmação estiver ativa).' }
-}
