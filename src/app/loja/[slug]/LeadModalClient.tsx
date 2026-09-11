@@ -3,12 +3,7 @@
 import { useState } from 'react'
 import { ShoppingBag, X, Send } from 'lucide-react'
 
-// Mocking server action for leads
-async function submitLead(formData: FormData) {
-  // In a real implementation this would call a server action to insert into 'leads' table
-  // with tenant_id, product_id, nome, whatsapp.
-  return new Promise(resolve => setTimeout(resolve, 500))
-}
+import { createPublicLead } from '@/app/app/actions'
 
 export default function LeadModalClient({ product, tenantWhatsApp }: { product: any, tenantWhatsApp?: string }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -20,7 +15,7 @@ export default function LeadModalClient({ product, tenantWhatsApp }: { product: 
     setLoading(true)
     const formData = new FormData(e.currentTarget)
     try {
-      await submitLead(formData)
+      await createPublicLead(formData, product.tenant_id, product.id)
       setSuccess(true)
       // Optional: redirect to whatsapp directly after capturing lead
       if (tenantWhatsApp) {

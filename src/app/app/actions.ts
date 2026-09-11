@@ -182,3 +182,20 @@ export async function updateDeliveryStatus(id: string, newStatus: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/app/entregas')
 }
+
+export async function createPublicLead(formData: FormData, tenantId: string, productId: string) {
+  const supabase = await createClient()
+  const nome = formData.get('nome') as string
+  const whatsapp = formData.get('whatsapp') as string
+
+  const { error } = await supabase.from('leads').insert({
+    tenant_id: tenantId,
+    product_id: productId,
+    nome,
+    whatsapp,
+    status: 'novo',
+    origem: 'vitrine_virtual'
+  })
+
+  if (error) throw new Error(error.message)
+}

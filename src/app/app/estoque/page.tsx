@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Search, Plus, Filter, MoreHorizontal, Edit, Trash, MessageSquare } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
+import Link from 'next/link'
+import { ProductModal } from '@/components/modals/ProductModal'
 
 export default function EstoquePage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -43,10 +45,10 @@ export default function EstoquePage() {
             <Filter size={18} />
             <span className="hidden sm:inline">Filtros</span>
           </button>
-          <button className="btn-primary flex items-center gap-2">
+          <Link href="?modal=product" className="btn-primary flex items-center gap-2">
             <Plus size={18} />
             <span>Novo Produto</span>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -144,6 +146,7 @@ export default function EstoquePage() {
           </div>
         </div>
       </div>
+      <ProductModal />
     </div>
   )
 }

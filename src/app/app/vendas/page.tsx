@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Search, Plus, Filter, FileText, ArrowUpRight } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
+import Link from 'next/link'
+import { SaleModal } from '@/components/modals/SaleModal'
 
 export default function VendasPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -65,10 +67,10 @@ export default function VendasPage() {
             <Filter size={18} />
             <span className="hidden sm:inline">Filtros</span>
           </button>
-          <button className="btn-primary flex items-center gap-2">
+          <Link href="?modal=sale" className="btn-primary flex items-center gap-2">
             <Plus size={18} />
             <span>Nova Venda Manual</span>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -194,6 +196,7 @@ export default function VendasPage() {
           )}
         </div>
       </div>
+      <SaleModal />
     </div>
   )
 }

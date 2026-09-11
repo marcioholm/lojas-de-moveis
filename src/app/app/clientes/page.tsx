@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Search, Plus, Filter, MessageSquare, Phone, FileText, Edit } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
+import Link from 'next/link'
+import { CustomerModal } from '@/components/modals/CustomerModal'
 
 export default function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -43,10 +45,10 @@ export default function ClientesPage() {
             <Filter size={18} />
             <span className="hidden sm:inline">Filtros</span>
           </button>
-          <button className="btn-primary flex items-center gap-2">
+          <Link href="?modal=customer" className="btn-primary flex items-center gap-2">
             <Plus size={18} />
             <span>Novo Cliente</span>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -132,6 +134,7 @@ export default function ClientesPage() {
           )}
         </div>
       </div>
+      <CustomerModal />
     </div>
   )
 }
