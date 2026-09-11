@@ -1,190 +1,152 @@
-import { createClient } from '@/utils/supabase/server'
-import { Plus, Printer, Check, Receipt, CheckCircle, AlertTriangle, DollarSign } from 'lucide-react'
-import { payInstallment } from '@/app/app/actions'
+'use client'
 
-function formatMoney(value: number) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
-}
+import { useState } from 'react'
+import { Search, Plus, Filter, Wallet, Printer, FileText, CalendarDays } from 'lucide-react'
+import { mockCrediario } from '@/lib/mockData'
 
-export default async function CrediarioPage() {
-  const supabase = await createClient()
+export default function CrediarioPage() {
+  const [searchTerm, setSearchTerm] = useState('')
 
-  // Fetch sales that have forma_pagamento = 'Crediário' or have installments, along with their installments
-  const { data: salesWithInstallments } = await supabase
-    .from('sales')
-    .select(`
-      id,
-      total,
-      customers ( nome ),
-      installments (
-        id,
-        valor,
-        data_vencimento,
-        status,
-        data_pagamento
-      )
-    `)
-    .eq('forma_pagamento', 'Crediário')
-    .order('created_at', { ascending: false })
-
-  let totalReceber = 0
-  let emDiaCount = 0
-  let vencendoCount = 0
-  let atrasoCount = 0
-  
-  const carnes = (salesWithInstallments || []).map(sale => {
-    const sortedInstallments = (sale.installments || []).sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())
-    
-    let paidCount = 0
-    let nextValue = 0
-    let nextDate = ''
-    let carneStatus = 'Em dia'
-
-    const today = new Date().toISOString().split('T')[0]
-
-    for (const inst of sortedInstallments) {
-      if (inst.status === 'pago') {
-        paidCount++
-      } else {
-        if (nextValue === 0) {
-          nextValue = inst.valor
-          nextDate = inst.data_vencimento
-        }
-        totalReceber += inst.valor
-        
-        if (inst.status === 'atrasado' || inst.data_vencimento < today) {
-          carneStatus = 'Em atraso'
-        } else if (inst.data_vencimento === today) {
-          if (carneStatus !== 'Em atraso') carneStatus = 'Vencendo'
-        }
-      }
-    }
-
-    if (carneStatus === 'Em dia') emDiaCount++
-    if (carneStatus === 'Vencendo') vencendoCount++
-    if (carneStatus === 'Em atraso') atrasoCount++
-
-    return {
-      id: sale.id as string,
-      customer: (sale.customers as any)?.nome || 'Cliente Removido',
-      total: sale.total,
-      installments: sortedInstallments,
-      paidCount,
-      nextValue,
-      nextDate,
-      status: carneStatus
-    }
-  }).filter(c => c.installments.length > 0)
+  const filteredCrediario = mockCrediario.filter(c => 
+    c.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.id.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
-    <div>
-      <div className="page-head">
+    <div className="space-y-6 fade-in">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2>Carnê / Crediário</h2>
-          <p>Controle de carnês da loja: parcelas, vencimentos, baixa de pagamentos e impressão.</p>
+          <h1 className="text-2xl font-bold font-serif text-[var(--text-primary)]">Gestão de Crediário</h1>
+          <p className="text-[var(--text-muted)] text-sm">Controle de carnês e parcelas em aberto</p>
         </div>
-        <button className="btn btn-primary bg-[var(--primary)] text-white">
-          <Plus size={16} /> Novo carnê
-        </button>
-      </div>
-
-      <div className="carne-stats">
-        <div className="kpi">
-          <div className="kpi-icon green"><Receipt size={20} /></div>
-          <div>
-            <div className="kpi-label">Total a receber</div>
-            <div className="kpi-value">{formatMoney(totalReceber)}</div>
-            <div className="kpi-detail">{carnes.length} carnês ativos</div>
-          </div>
-        </div>
-        <div className="kpi">
-          <div className="kpi-icon blue"><CheckCircle size={20} /></div>
-          <div>
-            <div className="kpi-label">Em dia</div>
-            <div className="kpi-value">{emDiaCount}</div>
-            <div className="kpi-detail">carnês</div>
-          </div>
-        </div>
-        <div className="kpi">
-          <div className="kpi-icon red"><AlertTriangle size={20} /></div>
-          <div>
-            <div className="kpi-label">Vencendo / Atrasado</div>
-            <div className="kpi-value">{vencendoCount + atrasoCount}</div>
-            <div className="kpi-detail">precisam de atenção</div>
-          </div>
-        </div>
-        <div className="kpi">
-          <div className="kpi-icon gold"><DollarSign size={20} /></div>
-          <div>
-            <div className="kpi-label">Recebido este mês</div>
-            <div className="kpi-value">{formatMoney(0)}</div>
-            <div className="kpi-detail">0 parcelas baixadas</div>
-          </div>
+        <div className="flex gap-3">
+          <button className="btn-secondary flex items-center gap-2">
+            <Filter size={18} />
+            <span className="hidden sm:inline">Filtros</span>
+          </button>
+          <button className="btn-primary flex items-center gap-2">
+            <Plus size={18} />
+            <span>Novo Carnê</span>
+          </button>
         </div>
       </div>
 
-      <div className="carne-list">
-        {carnes.length > 0 ? carnes.map(c => {
-          const badgeClass = c.status === 'Em dia' ? 'badge-success' : c.status === 'Vencendo' ? 'badge-warning' : 'badge-danger'
-          
-          return (
-            <div key={c.id} className="carne-card">
-              <div className="carne-header">
-                <div className="carne-customer">
-                  <b>{c.customer}</b>
-                  <small>Venda {c.id.split('-')[0].toUpperCase()}</small>
-                </div>
-                <div className="carne-meta">
-                  <div className="carne-id">Contrato {c.id.substring(0,8).toUpperCase()}</div>
-                  <div className="carne-total">{formatMoney(c.total)}</div>
-                </div>
-              </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="glass-panel p-4 flex items-center gap-4 border-l-4 border-l-[var(--success)]">
+          <div className="p-3 bg-[var(--success-bg)] rounded-full text-[var(--success)]">
+            <Wallet size={24} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Recebido Hoje</p>
+            <h3 className="text-xl font-bold font-serif text-[var(--text-primary)]">R$ 2.450,00</h3>
+          </div>
+        </div>
+        <div className="glass-panel p-4 flex items-center gap-4 border-l-4 border-l-[var(--warning)]">
+          <div className="p-3 bg-[var(--warning-bg)] rounded-full text-[var(--warning)]">
+            <CalendarDays size={24} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Vence Hoje</p>
+            <h3 className="text-xl font-bold font-serif text-[var(--text-primary)]">R$ 890,00</h3>
+          </div>
+        </div>
+        <div className="glass-panel p-4 flex items-center gap-4 border-l-4 border-l-[var(--danger)]">
+          <div className="p-3 bg-[var(--danger-bg)] rounded-full text-[var(--danger)]">
+            <FileText size={24} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Atrasados (Geral)</p>
+            <h3 className="text-xl font-bold font-serif text-[var(--danger)]">R$ 4.230,00</h3>
+          </div>
+        </div>
+      </div>
 
-              <div className="carne-parcelas">
-                {c.installments.map((inst, i) => {
-                  let sClass = 'upcoming'
-                  if (inst.status === 'pago') sClass = 'paid'
-                  else if (i === c.paidCount && c.status === 'Em atraso') sClass = 'overdue'
-                  else if (i === c.paidCount && c.status === 'Vencendo') sClass = 'current'
-                  else if (i === c.paidCount) sClass = 'current'
-                  
-                  return (
-                    <div key={inst.id} className={`parcela ${sClass}`} title={`Parcela ${i + 1}`}>
-                      {i + 1}
+      {/* Glass Panel Table */}
+      <div className="glass-panel p-0 overflow-hidden">
+        {/* Toolbar */}
+        <div className="p-4 border-b border-[var(--border)] flex items-center gap-4 bg-[var(--bg-inset)]">
+          <div className="relative flex-1 max-w-md">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <input 
+              type="text" 
+              placeholder="Buscar por ID, Cliente..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white/50 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-[var(--border)] bg-black/5 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="p-4 font-semibold">Carnê</th>
+                <th className="p-4 font-semibold">Cliente</th>
+                <th className="p-4 font-semibold text-center">Parcela</th>
+                <th className="p-4 font-semibold">Vencimento</th>
+                <th className="p-4 font-semibold text-right">Valor</th>
+                <th className="p-4 font-semibold">Status</th>
+                <th className="p-4 font-semibold text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCrediario.map((item) => (
+                <tr key={item.id} className="border-b border-[var(--border)] hover:bg-black/5 transition-colors group">
+                  <td className="p-4">
+                    <span className="font-mono text-sm font-bold text-[var(--primary)]">{item.id}</span>
+                  </td>
+                  <td className="p-4">
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{item.cliente}</p>
+                  </td>
+                  <td className="p-4 text-center">
+                    <span className="inline-block px-2 py-1 bg-black/5 rounded text-xs font-bold text-[var(--text-secondary)]">{item.carne}</span>
+                  </td>
+                  <td className="p-4 text-sm text-[var(--text-secondary)]">
+                    {item.vencimento}
+                  </td>
+                  <td className="p-4 text-sm font-bold text-[var(--text-primary)] text-right">
+                    R$ {item.valor.toFixed(2).replace('.', ',')}
+                  </td>
+                  <td className="p-4">
+                    <div className="flex flex-col items-start gap-1">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
+                        ${item.status === 'Em Dia' ? 'bg-[var(--success-bg)] text-[var(--success)]' : 'bg-[var(--danger-bg)] text-[var(--danger)]'}
+                      `}>
+                        {item.status}
+                      </span>
+                      {item.diasAtraso > 0 && (
+                        <span className="text-[10px] text-[var(--danger)] font-medium">{item.diasAtraso} dias de atraso</span>
+                      )}
                     </div>
-                  )
-                })}
-              </div>
-
-              <div className="carne-footer">
-                <div className="carne-footer-info">
-                  {c.nextValue > 0 ? (
-                    <>
-                      Próxima parcela: <b>{formatMoney(c.nextValue)}</b> em {new Date(c.nextDate + 'T12:00:00Z').toLocaleDateString('pt-BR')}
-                    </>
-                  ) : (
-                    <b>Quitado</b>
-                  )}
-                  &nbsp;&nbsp;<span className={`badge ${badgeClass}`}>{c.status}</span>
-                </div>
-                <div className="carne-actions">
-                  <button className="btn btn-outline btn-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-                    <Printer size={14} /> Imprimir
-                  </button>
-                  <form action={payInstallment.bind(null, c.installments[c.paidCount]?.id || '')}>
-                    <button type="submit" className="btn btn-primary btn-sm bg-[var(--primary)] text-white" disabled={c.nextValue === 0}>
-                      <Check size={14} /> Dar baixa
-                    </button>
-                  </form>
-                </div>
-              </div>
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="p-1.5 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-md transition-colors" title="Ver Detalhes">
+                        <FileText size={16} />
+                      </button>
+                      <button className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-black/10 rounded-md transition-colors" title="Imprimir Carnê">
+                        <Printer size={16} />
+                      </button>
+                      <button className="p-1.5 text-[var(--text-muted)] hover:text-[var(--success)] hover:bg-[var(--success-bg)] rounded-md transition-colors" title="Receber Parcela">
+                        <Wallet size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          
+          {filteredCrediario.length === 0 && (
+            <div className="p-12 text-center text-[var(--text-muted)]">
+              Nenhuma parcela encontrada.
             </div>
-          )
-        }) : (
-          <div className="text-center py-10 text-[var(--text-muted)] border border-dashed border-[var(--border)] rounded-[var(--radius)]">
-            Nenhum carnê em andamento.
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

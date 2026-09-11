@@ -27,3 +27,22 @@ export const mockPedidos = [
   { id: 'PD-502', cliente: 'Ana Clara Souza', dataPrevista: '02/11/2023', produtos: 'Mesa Ágata 6 Lug...', valor: 1850.00, status: 'Aguardando Estoque', origem: 'E-commerce' },
   { id: 'PD-503', cliente: 'Carlos Eduardo Ferreira', dataPrevista: '30/10/2023', produtos: 'Poltrona Costela...', valor: 890.00, status: 'Pronto para Entrega', origem: 'Loja Física' },
 ]
+
+export const mockCrediario = [
+  { id: 'CR-4001', cliente: 'João Pedro Santos', carne: '1/12', vencimento: '28/10/2023', valor: 250.00, status: 'Atrasado', diasAtraso: 2 },
+  { id: 'CR-4002', cliente: 'Maria Silva Oliveira', carne: '3/10', vencimento: '05/11/2023', valor: 345.00, status: 'Em Dia', diasAtraso: 0 },
+  { id: 'CR-4003', cliente: 'Ana Clara Souza', carne: '5/24', vencimento: '10/11/2023', valor: 450.50, status: 'Em Dia', diasAtraso: 0 },
+  { id: 'CR-4004', cliente: 'Carlos Eduardo Ferreira', carne: '12/12', vencimento: '15/10/2023', valor: 180.00, status: 'Atrasado', diasAtraso: 15 },
+]
+
+export const mockContasPagar = [
+  { id: 'CP-801', fornecedor: 'Indústria de Móveis Sul Ltda', descricao: 'Nota Fiscal 45982', vencimento: '05/11/2023', valor: 14500.00, status: 'Pendente' },
+  { id: 'CP-802', fornecedor: 'Transportadora Veloz', descricao: 'Frete Fatura Out/23', vencimento: '10/11/2023', valor: 3200.00, status: 'Pendente' },
+  { id: 'CP-803', fornecedor: 'Enel Distribuição', descricao: 'Conta de Energia (Loja Centro)', vencimento: '25/10/2023', valor: 850.40, status: 'Pago' },
+]
+
+export const mockComissoes = [
+  { id: 'CM-01', vendedor: 'Carlos Silva', totalVendas: 45000.00, taxa: '3%', comissao: 1350.00, premios: 200.00, totalReceber: 1550.00, status: 'A Pagar' },
+  { id: 'CM-02', vendedor: 'Ana Beatriz', totalVendas: 52000.00, taxa: '3%', comissao: 1560.00, premios: 500.00, totalReceber: 2060.00, status: 'A Pagar' },
+  { id: 'CM-03', vendedor: 'Roberto Oliveira', totalVendas: 28000.00, taxa: '3%', comissao: 840.00, premios: 0.00, totalReceber: 840.00, status: 'Pago' },
+]
