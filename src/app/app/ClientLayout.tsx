@@ -61,7 +61,7 @@ export default function ClientLayout({ children, userProfile }: { children: Reac
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full border-[1.5px] border-[var(--sidebar-accent)] flex items-center justify-center text-[var(--sidebar-accent)] font-serif font-bold text-lg">
-              M
+              V
             </div>
             <div className="ml-3 transition-all duration-300">
               <b className="block text-white text-sm font-bold tracking-wider uppercase">Vitrina</b>
